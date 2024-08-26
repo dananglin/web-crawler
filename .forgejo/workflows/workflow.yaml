@@ -1,0 +1,37 @@
+---
+on:
+  pull_request:
+    types:
+    - opened
+    - reopened
+    - synchronize
+
+jobs:
+  test:
+    runs-on: docker
+    env:
+      GO_TEST_VERBOSE: "1"
+      GO_TEST_COVER: "1"
+    steps:
+    - name: Checkout Repository
+      uses: https://code.forgejo.org/actions/checkout@v4
+    - name: Setup Go
+      uses: https://code.forgejo.org/actions/setup-go@v5
+      with:
+        go-version: '1.22'
+    - name: Test
+      run: go run magefiles/main.go -v test
+
+  lint:
+    runs-on: docker
+    steps:
+    - name: Checkout Repository
+      uses: https://code.forgejo.org/actions/checkout@v4
+    - name: Setup Go
+      uses: https://code.forgejo.org/actions/setup-go@v5
+      with:
+        go-version: '1.22'
+    - name: Lint
+      uses: https://github.com/golangci/golangci-lint-action@v3
+      with:
+        version: v1.54
