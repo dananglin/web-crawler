@@ -11,15 +11,15 @@ import (
 )
 
 type Crawler struct {
-	pages              map[string]int
-	baseURL            *url.URL
-	mu                 *sync.Mutex
-	concurrencyControl chan struct{}
-	wg                 *sync.WaitGroup
-	maxPages           int
+	pages      map[string]int
+	baseURL    *url.URL
+	mu         *sync.Mutex
+	workerPool chan struct{}
+	wg         *sync.WaitGroup
+	maxPages   int
 }
 
-func NewCrawler(rawBaseURL string, maxConcurrency, maxPages int) (*Crawler, error) {
+func NewCrawler(rawBaseURL string, maxWorkers, maxPages int) (*Crawler, error) {
 	baseURL, err := url.Parse(rawBaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse the base URL: %w", err)
@@ -30,12 +30,12 @@ func NewCrawler(rawBaseURL string, maxConcurrency, maxPages int) (*Crawler, erro
 	waitGroup.Add(1)
 
 	crawler := Crawler{
-		pages:              make(map[string]int),
-		baseURL:            baseURL,
-		mu:                 &sync.Mutex{},
-		concurrencyControl: make(chan struct{}, maxConcurrency),
-		wg:                 &waitGroup,
-		maxPages:           maxPages,
+		pages:      make(map[string]int),
+		baseURL:    baseURL,
+		mu:         &sync.Mutex{},
+		workerPool: make(chan struct{}, maxWorkers),
+		wg:         &waitGroup,
+		maxPages:   maxPages,
 	}
 
 	return &crawler, nil
@@ -43,12 +43,12 @@ func NewCrawler(rawBaseURL string, maxConcurrency, maxPages int) (*Crawler, erro
 
 func (c *Crawler) Crawl(rawCurrentURL string) {
 	// Add an empty struct to channel here
-	c.concurrencyControl <- struct{}{}
+	c.workerPool <- struct{}{}
 
-	// Decrement the wait group counter and free up the channel when finished
-	// crawling.
+	// Decrement the wait group counter and free up the worker pool when
+	// finished crawling.
 	defer func() {
-		<-c.concurrencyControl
+		<-c.workerPool
 		c.wg.Done()
 	}()
 

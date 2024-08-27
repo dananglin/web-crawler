@@ -1,9 +1,10 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"os"
-	"strconv"
 
 	"codeflow.dananglin.me.uk/apollo/web-crawler/internal/crawler"
 )
@@ -16,26 +17,25 @@ func main() {
 	}
 }
 
+var errNoURLProvided = errors.New("the URL is not provided")
+
 func run() error {
-	args := os.Args[1:]
+	var (
+		maxWorkers int
+		maxPages   int
+	)
 
-	if len(args) != 3 {
-		return fmt.Errorf("unexpected number of arguments received: want 3, got %d", len(args))
+	flag.IntVar(&maxWorkers, "max-workers", 2, "The maximum number of concurrent workers")
+	flag.IntVar(&maxPages, "max-pages", 10, "The maximum number of pages to discover before stopping the crawl")
+	flag.Parse()
+
+	if flag.NArg() < 1 {
+		return errNoURLProvided
 	}
 
-	baseURL := args[0]
+	baseURL := flag.Arg(0)
 
-	maxConcurrency, err := strconv.Atoi(args[1])
-	if err != nil {
-		return fmt.Errorf("unable to convert the max concurrency (%s) to an integer: %w", args[1], err)
-	}
-
-	maxPages, err := strconv.Atoi(args[2])
-	if err != nil {
-		return fmt.Errorf("unable to convert the max pages (%s) to an integer: %w", args[2], err)
-	}
-
-	c, err := crawler.NewCrawler(baseURL, maxConcurrency, maxPages)
+	c, err := crawler.NewCrawler(baseURL, maxWorkers, maxPages)
 	if err != nil {
 		return fmt.Errorf("unable to create the crawler: %w", err)
 	}
