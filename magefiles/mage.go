@@ -14,23 +14,23 @@ import (
 )
 
 const (
-	app                  = "binary"
+	app                  = "crawler"
 	defaultInstallPrefix = "/usr/local"
-	envInstallPrefix     = "PROJECT_INSTALL_PREFIX"
-	envTestVerbose       = "PROJECT_TEST_VERBOSE"
-	envTestCover         = "PROJECT_TEST_COVER"
-	envBuildRebuildAll   = "PROJECT_BUILD_REBUILD_ALL"
-	envBuildVerbose      = "PROJECT_BUILD_VERBOSE"
+	envInstallPrefix     = "CRAWLER_INSTALL_PREFIX"
+	envTestVerbose       = "CRAWLER_TEST_VERBOSE"
+	envTestCover         = "CRAWLER_TEST_COVER"
+	envBuildRebuildAll   = "CRAWLER_BUILD_REBUILD_ALL"
+	envBuildVerbose      = "CRAWLER_BUILD_VERBOSE"
 )
 
 var (
 	Default = Build
-	binary  = "./__build/" + app
+	binary  = app
 )
 
 // Test run the go tests.
-// To enable verbose mode set PROJECT_TEST_VERBOSE=1.
-// To enable coverage mode set PROJECT_TEST_COVER=1.
+// To enable verbose mode set CRAWLER_TEST_VERBOSE=1.
+// To enable coverage mode set CRAWLER_TEST_COVER=1.
 func Test() error {
 	goTest := sh.RunCmd("go", "test")
 
@@ -56,10 +56,10 @@ func Lint() error {
 // To rebuild packages that are already up-to-date set PROJECT_BUILD_REBUILD_ALL=1
 // To enable verbose mode set PROJECT_BUILD_VERBOSE=1
 func Build() error {
-	main := "main.go"
-	flags := ldflags()
+	main := "."
+	//flags := ldflags()
 	build := sh.RunCmd("go", "build")
-	args := []string{"-ldflags=" + flags, "-o", binary}
+	args := []string{"-ldflags=-s -w", "-o", binary}
 
 	if os.Getenv(envBuildRebuildAll) == "1" {
 		args = append(args, "-a")
