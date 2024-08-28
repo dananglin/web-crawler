@@ -29,7 +29,7 @@ func run() error {
 
 	flag.IntVar(&maxWorkers, "max-workers", 2, "The maximum number of concurrent workers")
 	flag.IntVar(&maxPages, "max-pages", 10, "The maximum number of pages to discover before stopping the crawl")
-	flag.StringVar(&format, "format", "text", "The format of the report. Can be 'text' or 'csv'")
+	flag.StringVar(&format, "format", "text", "The format of the report. Valid formats are 'text', 'json' and 'csv'")
 	flag.StringVar(&file, "file", "", "The file to save the report to")
 
 	flag.Parse()

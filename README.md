@@ -49,9 +49,9 @@ Run the application specifying the website that you want to crawl.
    ```
    ./crawler --max-workers 3 --max-pages 100 https://crawler-test.com
    ```
-- Crawl the site and print out a CSV report.
+- Crawl the site and print out a JSON report.
    ```
-   ./crawler --max-workers 3 --max-pages 100 --format csv https://crawler-test.com
+   ./crawler --max-workers 3 --max-pages 100 --format json https://crawler-test.com
    ```
 - Crawl the site and save the report to a CSV file.
    ```
@@ -67,5 +67,5 @@ You can configure the application with the following flags.
 |------|-------------|---------|
 | `max-workers` | The maximum number of concurrent workers. | 2 |
 | `max-pages` | The maximum number of pages the crawler can discoverd before stopping the crawl. | 10 |
-| `format` | The format of the generated report.<br>Currently supports `text` and `csv`. | text |
+| `format` | The format of the generated report.<br>Currently supports `text`, `csv` or `json`. | text |
 | `file` | The file to save the generated report to.<br>Leave this empty to print to the screen instead. | |

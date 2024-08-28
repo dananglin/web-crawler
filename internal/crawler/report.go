@@ -9,15 +9,15 @@ import (
 )
 
 type report struct {
-	format  string
-	baseURL string
-	records []record
+	Format  string   `json:"-"`
+	BaseURL string   `json:"baseUrl"`
+	Records []record `json:"records"`
 }
 
 type record struct {
-	link     string
-	count    int
-	linkType string
+	Link     string `json:"link"`
+	Count    int    `json:"count"`
+	LinkType string `json:"linkType"`
 }
 
 func newReport(format, baseURL string, pages map[string]pageStat) report {
@@ -30,18 +30,18 @@ func newReport(format, baseURL string, pages map[string]pageStat) report {
 		}
 
 		record := record{
-			link:     link,
-			count:    stats.count,
-			linkType: linkType,
+			Link:     link,
+			Count:    stats.count,
+			LinkType: linkType,
 		}
 
 		records = append(records, record)
 	}
 
 	report := report{
-		format:  format,
-		baseURL: baseURL,
-		records: records,
+		Format:  format,
+		BaseURL: baseURL,
+		Records: records,
 	}
 
 	report.sortRecords()
@@ -52,17 +52,17 @@ func newReport(format, baseURL string, pages map[string]pageStat) report {
 func (r *report) sortRecords() {
 	// First sort records by count (in reverse order hopefully)
 	// Then sort records by name if two elements have the same count.
-	slices.SortFunc(r.records, func(a, b record) int {
-		if n := cmp.Compare(a.count, b.count); n != 0 {
+	slices.SortFunc(r.Records, func(a, b record) int {
+		if n := cmp.Compare(a.Count, b.Count); n != 0 {
 			return -1 * n
 		}
 
-		return strings.Compare(a.link, b.link)
+		return strings.Compare(a.Link, b.Link)
 	})
 }
 
 func (r report) String() string {
-	switch r.format {
+	switch r.Format {
 	case "csv":
 		return r.csv()
 	default:
@@ -76,16 +76,16 @@ func (r report) text() string {
 	titlebar := strings.Repeat("\u2500", 80)
 
 	builder.WriteString("\n" + titlebar)
-	builder.WriteString("\n" + "REPORT for " + r.baseURL)
+	builder.WriteString("\n" + "REPORT for " + r.BaseURL)
 	builder.WriteString("\n" + titlebar)
 
-	for ind := range slices.All(r.records) {
+	for ind := range slices.All(r.Records) {
 		links := "links"
-		if r.records[ind].count == 1 {
+		if r.Records[ind].Count == 1 {
 			links = "link"
 		}
 
-		builder.WriteString("\nFound " + strconv.Itoa(r.records[ind].count) + " " + r.records[ind].linkType + " " + links + " to " + r.records[ind].link)
+		builder.WriteString("\nFound " + strconv.Itoa(r.Records[ind].Count) + " " + r.Records[ind].LinkType + " " + links + " to " + r.Records[ind].Link)
 	}
 
 	return builder.String()
@@ -96,8 +96,8 @@ func (r report) csv() string {
 
 	builder.WriteString("LINK,TYPE,COUNT")
 
-	for ind := range slices.All(r.records) {
-		builder.WriteString("\n" + r.records[ind].link + "," + r.records[ind].linkType + "," + strconv.Itoa(r.records[ind].count))
+	for ind := range slices.All(r.Records) {
+		builder.WriteString("\n" + r.Records[ind].Link + "," + r.Records[ind].LinkType + "," + strconv.Itoa(r.Records[ind].Count))
 	}
 
 	return builder.String()

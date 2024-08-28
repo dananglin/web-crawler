@@ -24,19 +24,19 @@ func TestReport(t *testing.T) {
 	}
 
 	want := report{
-		format:  "text",
-		baseURL: "https://example.org",
-		records: []record{
-			{link: "example.org", count: 45, linkType: "internal"},
-			{link: "example.org/about/contact", count: 10, linkType: "internal"},
-			{link: "example.org/posts", count: 4, linkType: "internal"},
-			{link: "example.org/tags", count: 4, linkType: "internal"},
-			{link: "mastodon.example.social/@benbarlett", count: 4, linkType: "external"},
-			{link: "example.org/tags/golang", count: 2, linkType: "internal"},
-			{link: "ben-barlett.dev", count: 1, linkType: "external"},
-			{link: "example.org/posts/yet-another-web-crawler-has-emerged", count: 1, linkType: "internal"},
-			{link: "github.com/benbarlettdotdev", count: 1, linkType: "external"},
-			{link: "github.com/dananglin/web-crawler", count: 1, linkType: "external"},
+		Format:  "text",
+		BaseURL: "https://example.org",
+		Records: []record{
+			{Link: "example.org", Count: 45, LinkType: "internal"},
+			{Link: "example.org/about/contact", Count: 10, LinkType: "internal"},
+			{Link: "example.org/posts", Count: 4, LinkType: "internal"},
+			{Link: "example.org/tags", Count: 4, LinkType: "internal"},
+			{Link: "mastodon.example.social/@benbarlett", Count: 4, LinkType: "external"},
+			{Link: "example.org/tags/golang", Count: 2, LinkType: "internal"},
+			{Link: "ben-barlett.dev", Count: 1, LinkType: "external"},
+			{Link: "example.org/posts/yet-another-web-crawler-has-emerged", Count: 1, LinkType: "internal"},
+			{Link: "github.com/benbarlettdotdev", Count: 1, LinkType: "external"},
+			{Link: "github.com/dananglin/web-crawler", Count: 1, LinkType: "external"},
 		},
 	}
 

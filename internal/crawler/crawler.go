@@ -1,7 +1,9 @@
 package crawler
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"sync"
@@ -174,6 +176,12 @@ func (c *Crawler) GenerateReport() error {
 
 	report := newReport(c.reportFormat, c.baseURL.String(), c.pages)
 
+	if c.reportFormat == "json" {
+		return c.generateJSONReport(report)
+	}
+
+	var writer io.Writer
+
 	if c.filepath != "" {
 		file, err := os.Create(c.filepath)
 		if err != nil {
@@ -181,16 +189,53 @@ func (c *Crawler) GenerateReport() error {
 		}
 		defer file.Close()
 
-		fmt.Fprintln(file, report)
+		writer = file
 
-		fmt.Println("\nSuccessfully saved the report to", c.filepath)
+		fmt.Fprintln(file, report)
 	} else {
-		fmt.Fprintln(os.Stdout, report)
+		writer = os.Stdout
+	}
+
+	fmt.Fprintln(writer, report)
+
+	if c.filepath != "" {
+		fmt.Println("\nSuccessfully saved the report to", c.filepath)
 	}
 
 	return nil
 }
 
+func (c *Crawler) generateJSONReport(report report) error {
+	var writer io.Writer
+
+	if c.filepath != "" {
+		file, err := os.Create(c.filepath)
+		if err != nil {
+			return fmt.Errorf("error creating %s: %w", c.filepath, err)
+		}
+		defer file.Close()
+
+		writer = file
+	} else {
+		writer = os.Stdout
+	}
+
+	encoder := json.NewEncoder(writer)
+	encoder.SetIndent("", "    ")
+
+	if err := encoder.Encode(report); err != nil {
+		return fmt.Errorf("error marshalling the report to JSON: %w", err)
+	}
+
+	if c.filepath != "" {
+		fmt.Println("\nSuccessfully saved the report to", c.filepath)
+	}
+
+	return nil
+}
+
+// reachedMaxPages evaluates to true if the map has reached the
+// maximum number of entries.
 func (c *Crawler) reachedMaxPages() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
