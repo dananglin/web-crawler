@@ -53,8 +53,8 @@ func Lint() error {
 }
 
 // Build build the executable.
-// To rebuild packages that are already up-to-date set PROJECT_BUILD_REBUILD_ALL=1
-// To enable verbose mode set PROJECT_BUILD_VERBOSE=1
+// To rebuild packages that are already up-to-date set CRAWLER_BUILD_REBUILD_ALL=1
+// To enable verbose mode set CRAWLER_BUILD_VERBOSE=1
 func Build() error {
 	main := "."
 	//flags := ldflags()

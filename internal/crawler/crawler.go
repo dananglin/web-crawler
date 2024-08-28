@@ -10,12 +10,14 @@ import (
 )
 
 type Crawler struct {
-	pages      map[string]pageStat
-	baseURL    *url.URL
-	mu         *sync.Mutex
-	workerPool chan struct{}
-	wg         *sync.WaitGroup
-	maxPages   int
+	pages        map[string]pageStat
+	baseURL      *url.URL
+	mu           *sync.Mutex
+	workerPool   chan struct{}
+	wg           *sync.WaitGroup
+	maxPages     int
+	reportFormat string
+	filepath     string
 }
 
 type pageStat struct {
@@ -23,7 +25,7 @@ type pageStat struct {
 	internal bool
 }
 
-func NewCrawler(rawBaseURL string, maxWorkers, maxPages int) (*Crawler, error) {
+func NewCrawler(rawBaseURL string, maxWorkers, maxPages int, reportFormat, filepath string) (*Crawler, error) {
 	baseURL, err := url.Parse(rawBaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse the base URL: %w", err)
@@ -34,12 +36,14 @@ func NewCrawler(rawBaseURL string, maxWorkers, maxPages int) (*Crawler, error) {
 	waitGroup.Add(1)
 
 	crawler := Crawler{
-		pages:      make(map[string]pageStat),
-		baseURL:    baseURL,
-		mu:         &sync.Mutex{},
-		workerPool: make(chan struct{}, maxWorkers),
-		wg:         &waitGroup,
-		maxPages:   maxPages,
+		pages:        make(map[string]pageStat),
+		baseURL:      baseURL,
+		mu:           &sync.Mutex{},
+		workerPool:   make(chan struct{}, maxWorkers),
+		wg:           &waitGroup,
+		maxPages:     maxPages,
+		reportFormat: reportFormat,
+		filepath:     filepath,
 	}
 
 	return &crawler, nil
@@ -162,13 +166,29 @@ func (c *Crawler) Wait() {
 	c.wg.Wait()
 }
 
-func (c *Crawler) PrintReport() {
+// GenerateReport generates a report of the crawl. The report is written to a file if the
+// user specifies a file path, otherwise it is printed to the screen.
+func (c *Crawler) GenerateReport() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	r := newReport(c.baseURL.String(), c.pages)
+	report := newReport(c.reportFormat, c.baseURL.String(), c.pages)
 
-	fmt.Fprint(os.Stdout, r)
+	if c.filepath != "" {
+		file, err := os.Create(c.filepath)
+		if err != nil {
+			return fmt.Errorf("error creating %s: %w", c.filepath, err)
+		}
+		defer file.Close()
+
+		fmt.Fprintln(file, report)
+
+		fmt.Println("\nSuccessfully saved the report to", c.filepath)
+	} else {
+		fmt.Fprintln(os.Stdout, report)
+	}
+
+	return nil
 }
 
 func (c *Crawler) reachedMaxPages() bool {

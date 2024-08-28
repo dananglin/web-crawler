@@ -9,6 +9,7 @@ import (
 )
 
 type report struct {
+	format  string
 	baseURL string
 	records []record
 }
@@ -19,7 +20,15 @@ type record struct {
 	internal bool
 }
 
-func newReport(baseURL string, pages map[string]pageStat) report {
+func (r record) linkType() string {
+	if r.internal {
+		return "internal"
+	}
+
+	return "external"
+}
+
+func newReport(format, baseURL string, pages map[string]pageStat) report {
 	records := make([]record, 0)
 
 	for link, stats := range maps.All(pages) {
@@ -33,6 +42,7 @@ func newReport(baseURL string, pages map[string]pageStat) report {
 	}
 
 	report := report{
+		format:  format,
 		baseURL: baseURL,
 		records: records,
 	}
@@ -55,6 +65,15 @@ func (r *report) sortRecords() {
 }
 
 func (r report) String() string {
+	switch r.format {
+	case "csv":
+		return r.csv()
+	default:
+		return r.text()
+	}
+}
+
+func (r report) text() string {
 	var builder strings.Builder
 
 	titlebar := strings.Repeat("\u2500", 80)
@@ -64,20 +83,25 @@ func (r report) String() string {
 	builder.WriteString("\n" + titlebar)
 
 	for ind := range slices.All(r.records) {
-		linkType := "internal"
-		if !r.records[ind].internal {
-			linkType = "external"
-		}
-
 		links := "links"
 		if r.records[ind].count == 1 {
 			links = "link"
 		}
 
-		builder.WriteString("\nFound " + strconv.Itoa(r.records[ind].count) + " " + linkType + " " + links + " to " + r.records[ind].link)
+		builder.WriteString("\nFound " + strconv.Itoa(r.records[ind].count) + " " + r.records[ind].linkType() + " " + links + " to " + r.records[ind].link)
 	}
 
-	builder.WriteString("\n")
+	return builder.String()
+}
+
+func (r report) csv() string {
+	var builder strings.Builder
+
+	builder.WriteString("LINK,TYPE,COUNT")
+
+	for ind := range slices.All(r.records) {
+		builder.WriteString("\n" + r.records[ind].link + "," + r.records[ind].linkType() + "," + strconv.Itoa(r.records[ind].count))
+	}
 
 	return builder.String()
 }

@@ -11,7 +11,7 @@ import (
 func TestCrawler(t *testing.T) {
 	testBaseURL := "https://example.com"
 
-	testCrawler, err := NewCrawler(testBaseURL, 1, 10)
+	testCrawler, err := NewCrawler(testBaseURL, 1, 10, "text", "")
 	if err != nil {
 		t.Fatalf("Test 'TestCrawler' FAILED: unexpected error creating the crawler: %v", err)
 	}
