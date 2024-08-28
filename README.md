@@ -2,7 +2,7 @@
 
 ## Overview
 
-This web crawler crawls a given URL and generates a report for all the internal links it finds.
+This web crawler crawls a given website and generates a report for all the internal and external links found during the crawl.
 
 ### Repository mirrors
 
@@ -21,9 +21,15 @@ git clone https://github.com/dananglin/web-crawler.git
 ```
 
 Build the application.
-```
-go build -o crawler .
-```
+
+- Build with go
+   ```
+   go build -o crawler .
+   ```
+- Or build with [mage](https://magefile.org/) if you have it installed.
+   ```
+   mage build
+   ```
 
 Run the application specifying the website that you want to crawl.
 

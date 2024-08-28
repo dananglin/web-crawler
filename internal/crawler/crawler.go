@@ -6,17 +6,21 @@ import (
 	"os"
 	"sync"
 
-	"codeflow.dananglin.me.uk/apollo/web-crawler/internal/report"
 	"codeflow.dananglin.me.uk/apollo/web-crawler/internal/util"
 )
 
 type Crawler struct {
-	pages      map[string]int
+	pages      map[string]pageStat
 	baseURL    *url.URL
 	mu         *sync.Mutex
 	workerPool chan struct{}
 	wg         *sync.WaitGroup
 	maxPages   int
+}
+
+type pageStat struct {
+	count    int
+	internal bool
 }
 
 func NewCrawler(rawBaseURL string, maxWorkers, maxPages int) (*Crawler, error) {
@@ -30,7 +34,7 @@ func NewCrawler(rawBaseURL string, maxWorkers, maxPages int) (*Crawler, error) {
 	waitGroup.Add(1)
 
 	crawler := Crawler{
-		pages:      make(map[string]int),
+		pages:      make(map[string]pageStat),
 		baseURL:    baseURL,
 		mu:         &sync.Mutex{},
 		workerPool: make(chan struct{}, maxWorkers),
@@ -56,23 +60,6 @@ func (c *Crawler) Crawl(rawCurrentURL string) {
 		return
 	}
 
-	// if current URL is not on the same domain as the base URL then return early.
-	hasEqualDomain, err := c.HasEqualDomain(rawCurrentURL)
-	if err != nil {
-		fmt.Printf(
-			"WARNING: Unable to determine if %q has the same domain as %q; %v.\n",
-			rawCurrentURL,
-			c.baseURL.Hostname(),
-			err,
-		)
-
-		return
-	}
-
-	if !hasEqualDomain {
-		return
-	}
-
 	// get normalised version of rawCurrentURL
 	normalisedCurrentURL, err := util.NormaliseURL(rawCurrentURL)
 	if err != nil {
@@ -81,9 +68,25 @@ func (c *Crawler) Crawl(rawCurrentURL string) {
 		return
 	}
 
+	isInternalLink, err := c.isInternalLink(rawCurrentURL)
+	if err != nil {
+		fmt.Printf(
+			"WARNING: Unable to determine if %q is an internal link; %v.\n",
+			rawCurrentURL,
+			err,
+		)
+
+		return
+	}
+
 	// Add (or update) a record of the URL in the pages map.
 	// If there's already an entry of the URL in the map then return early.
-	if existed := c.AddPageVisit(normalisedCurrentURL); existed {
+	if existed := c.addPageVisit(normalisedCurrentURL, isInternalLink); existed {
+		return
+	}
+
+	// if current URL is an external link then return early.
+	if !isInternalLink {
 		return
 	}
 
@@ -119,7 +122,10 @@ func (c *Crawler) Crawl(rawCurrentURL string) {
 	}
 }
 
-func (c *Crawler) HasEqualDomain(rawURL string) (bool, error) {
+// isInternalLink evaluates whether the input URL is an internal link to the
+// base URL. An internal link is determined by comparing the host names of both
+// the input and base URLs.
+func (c *Crawler) isInternalLink(rawURL string) (bool, error) {
 	parsedRawURL, err := url.Parse(rawURL)
 	if err != nil {
 		return false, fmt.Errorf("error parsing the URL %q: %w", rawURL, err)
@@ -132,16 +138,21 @@ func (c *Crawler) HasEqualDomain(rawURL string) (bool, error) {
 // If there is already a record of the URL then it's record is updated (incremented)
 // and the method returns true. If the URL is not already recorded then it is created
 // and the method returns false.
-func (c *Crawler) AddPageVisit(normalisedURL string) bool {
+func (c *Crawler) addPageVisit(normalisedURL string, internal bool) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	_, exists := c.pages[normalisedURL]
 
 	if exists {
-		c.pages[normalisedURL]++
+		stat := c.pages[normalisedURL]
+		stat.count++
+		c.pages[normalisedURL] = stat
 	} else {
-		c.pages[normalisedURL] = 1
+		c.pages[normalisedURL] = pageStat{
+			count:    1,
+			internal: internal,
+		}
 	}
 
 	return exists
@@ -155,7 +166,7 @@ func (c *Crawler) PrintReport() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	r := report.NewReport(c.baseURL.String(), c.pages)
+	r := newReport(c.baseURL.String(), c.pages)
 
 	fmt.Fprint(os.Stdout, r)
 }

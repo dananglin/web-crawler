@@ -1,18 +1,17 @@
-package crawler_test
+package crawler
 
 import (
 	"fmt"
 	"slices"
 	"testing"
 
-	"codeflow.dananglin.me.uk/apollo/web-crawler/internal/crawler"
 	"codeflow.dananglin.me.uk/apollo/web-crawler/internal/util"
 )
 
 func TestCrawler(t *testing.T) {
 	testBaseURL := "https://example.com"
 
-	testCrawler, err := crawler.NewCrawler(testBaseURL, 1, 10)
+	testCrawler, err := NewCrawler(testBaseURL, 1, 10)
 	if err != nil {
 		t.Fatalf("Test 'TestCrawler' FAILED: unexpected error creating the crawler: %v", err)
 	}
@@ -50,7 +49,7 @@ func TestCrawler(t *testing.T) {
 	}
 
 	for ind, tc := range slices.All(testCasesForEqualDomains) {
-		t.Run(tc.name, testHasEqualDomains(
+		t.Run(tc.name, testIsInternalLink(
 			testCrawler,
 			ind+1,
 			tc.name,
@@ -83,7 +82,7 @@ func TestCrawler(t *testing.T) {
 
 	for ind, tc := range slices.All(testCasesForPages) {
 		name := fmt.Sprintf("Adding %s to the pages map", tc.rawURL)
-		t.Run(name, testAddPageVisit(
+		t.Run(name, testHasVisited(
 			testCrawler,
 			ind+1,
 			name,
@@ -93,8 +92,8 @@ func TestCrawler(t *testing.T) {
 	}
 }
 
-func testHasEqualDomains(
-	testCrawler *crawler.Crawler,
+func testIsInternalLink(
+	testCrawler *Crawler,
 	testNum int,
 	testName string,
 	rawURL string,
@@ -103,7 +102,7 @@ func testHasEqualDomains(
 	return func(t *testing.T) {
 		t.Parallel()
 
-		got, err := testCrawler.HasEqualDomain(rawURL)
+		got, err := testCrawler.isInternalLink(rawURL)
 		if err != nil {
 			t.Fatalf(
 				"Test %d - '%s' FAILED: unexpected error: %v",
@@ -132,8 +131,8 @@ func testHasEqualDomains(
 	}
 }
 
-func testAddPageVisit(
-	testCrawler *crawler.Crawler,
+func testHasVisited(
+	testCrawler *Crawler,
 	testNum int,
 	testName string,
 	rawURL string,
@@ -150,7 +149,7 @@ func testAddPageVisit(
 			)
 		}
 
-		gotVisited := testCrawler.AddPageVisit(normalisedURL)
+		gotVisited := testCrawler.addPageVisit(normalisedURL, true)
 
 		if gotVisited != wantVisited {
 			t.Errorf(
