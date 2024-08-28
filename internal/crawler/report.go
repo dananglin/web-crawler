@@ -17,25 +17,22 @@ type report struct {
 type record struct {
 	link     string
 	count    int
-	internal bool
-}
-
-func (r record) linkType() string {
-	if r.internal {
-		return "internal"
-	}
-
-	return "external"
+	linkType string
 }
 
 func newReport(format, baseURL string, pages map[string]pageStat) report {
 	records := make([]record, 0)
 
 	for link, stats := range maps.All(pages) {
+		linkType := "internal"
+		if !stats.internal {
+			linkType = "external"
+		}
+
 		record := record{
 			link:     link,
 			count:    stats.count,
-			internal: stats.internal,
+			linkType: linkType,
 		}
 
 		records = append(records, record)
@@ -88,7 +85,7 @@ func (r report) text() string {
 			links = "link"
 		}
 
-		builder.WriteString("\nFound " + strconv.Itoa(r.records[ind].count) + " " + r.records[ind].linkType() + " " + links + " to " + r.records[ind].link)
+		builder.WriteString("\nFound " + strconv.Itoa(r.records[ind].count) + " " + r.records[ind].linkType + " " + links + " to " + r.records[ind].link)
 	}
 
 	return builder.String()
@@ -100,7 +97,7 @@ func (r report) csv() string {
 	builder.WriteString("LINK,TYPE,COUNT")
 
 	for ind := range slices.All(r.records) {
-		builder.WriteString("\n" + r.records[ind].link + "," + r.records[ind].linkType() + "," + strconv.Itoa(r.records[ind].count))
+		builder.WriteString("\n" + r.records[ind].link + "," + r.records[ind].linkType + "," + strconv.Itoa(r.records[ind].count))
 	}
 
 	return builder.String()
