@@ -45,7 +45,7 @@ Run the application specifying the website that you want to crawl.
   ```
   ./crawler https://crawler-test.com
   ```
-- Crawl the site using 3 concurrent workers and generate a report of up to 100 pages.
+- Crawl the site using 3 concurrent workers and stop the crawl after discovering a maximum of 100 unique pages.
    ```
    ./crawler --max-workers 3 --max-pages 100 https://crawler-test.com
    ```
@@ -66,6 +66,6 @@ You can configure the application with the following flags.
 | Name | Description | Default |
 |------|-------------|---------|
 | `max-workers` | The maximum number of concurrent workers. | 2 |
-| `max-pages` | The maximum number of pages discovered before stopping the crawl. | 10 |
+| `max-pages` | The maximum number of pages the crawler can discoverd before stopping the crawl. | 10 |
 | `format` | The format of the generated report.<br>Currently supports `text` and `csv`. | text |
 | `file` | The file to save the generated report to.<br>Leave this empty to print to the screen instead. | |
